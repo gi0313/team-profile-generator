@@ -3,48 +3,10 @@ const fs = require('fs');
 const Engineer = require('./lib/Engineer');
 const Manager = require('./lib/Manager');
 const Intern = require('./lib/Intern');
-const generatePage = require('./src/page-template');
+const generateHTML = require('./src/page-template');
+const {writeFile} = require('./src/generate-site.js');
 
-const questions = [
-    {
-        type: 'input',
-        name: 'name',
-        message: 'Please enter their name.',
-         validate: nameInput => {
-            if (nameInput) {
-                return true;
-            } else {
-                console.log('Please enter a name.');
-                    return false;
-            }
-        }
-    },
-    {
-        name: 'id',
-        message: 'What is their ID number?',
-        validate: idInput => {
-             if (idInput) {
-                return true;
-            } else {
-                    console.log('Enter your employee ID number.');
-                return false;
-             }
-        }
-    },
-    {
-         type: 'input',
-         name: 'email',
-        message: 'What is their email?',
-        validate: emailInput => {
-            if (emailInput) {
-                return true;
-            } else {
-                 console.log('Enter an email!');
-                return false;
-            }
-        }
-    },
-]
+const team = [];
 
 const managerQuestion = () => {
     return inquirer.prompt ([
@@ -104,9 +66,6 @@ const managerQuestion = () => {
 }
 
 const specificQuestions = newEmployee => {
-    if (!newEmployee.person) {
-        newEmployee.person = [];
-    }
     return inquirer.prompt ([
     {
         type: 'list',
@@ -114,9 +73,47 @@ const specificQuestions = newEmployee => {
         message: 'What employee did you want to add?',
         choices: ['Engineer', 'Intern']
     },
+    {
+        type: 'input',
+        name: 'name',
+        message: 'Please enter their name.',
+         validate: nameInput => {
+            if (nameInput) {
+                return true;
+            } else {
+                console.log('Please enter a name.');
+                    return false;
+            }
+        }
+    },
+    {
+        type: 'input',
+        name: 'id',
+        message: 'What is their ID number?',
+        validate: idInput => {
+             if (idInput) {
+                return true;
+            } else {
+                    console.log('Enter your employee ID number.');
+                return false;
+             }
+        }
+    },
+    {
+         type: 'input',
+         name: 'email',
+        message: 'What is their email?',
+        validate: emailInput => {
+            if (emailInput) {
+                return true;
+            } else {
+                 console.log('Enter an email!');
+                return false;
+            }
+        }
+    },
     //Engineer
     {
-        questions,
         type: 'input',
         name: 'github',
         message: "What is their github username?",
@@ -167,7 +164,7 @@ const specificQuestions = newEmployee => {
 ])
 .then(employeeData => {
     console.log(newEmployee);
-    newEmployee.person.push(employeeData);
+    //newEmployee.person.push(employeeData);
     if (employeeData.confirmNewEmployee) {
         return specificQuestions(employeeData);
     } else {
@@ -176,21 +173,35 @@ const specificQuestions = newEmployee => {
 })
 };
 
+
 managerQuestion()
 .then(specificQuestions)
-.then(newEmployee => {
-    return generatePage(newEmployee);
+.then(employeeData =>{
+    const{name, id, email, officeNumber} = employeeData;
+    console.log(employeeData);
+       team.push(new Manager(name, id, email, officeNumber));
+    if (employeeData.role === 'Engineer'){
+       team.push(new Engineer(name, id, email, employeeData.github));
+   } else if(employeeData.role === 'Intern'){
+       team.push(new Intern(name, id, email, employeeData.school));
+       console.log(team);
+   }
 })
-.then(pageHTML => {
-    return writeFile(pageHTML);
-})
-.then(writeFileResponse => {
-    console.log(writeFileResponse);
-    return copyFile();
-})
-.then(copyFileResponse => {
-    console.log(copyFileResponse);
-})
-.catch(err => {
-    console.log(err);
-});
+.then (writeFile('./dist/index.html', generateHTML(team)))
+// .then(specificQuestions)
+// .then(newEmployee => {
+//     return generateHTML(newEmployee);
+// })
+// .then(pageHTML => {
+//     return writeFile(pageHTML);
+// })
+// .then(writeFileResponse => {
+//     console.log(writeFileResponse);
+//     return copyFile();
+// })
+// .then(copyFileResponse => {
+//     console.log(copyFileResponse);
+// })
+// .catch(err => {
+//     console.log(err);
+// });
